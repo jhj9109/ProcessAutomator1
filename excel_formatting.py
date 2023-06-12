@@ -101,7 +101,7 @@ def set_whole_worksheet_style(ws):
             cell.border = thin_side_border
     
 
-def create_new_seat(wb, 단지명, 몇동, 호수목록):
+def create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록):
     # 단지명, 몇동, 호수목록
     ws = wb.create_sheet(f"{단지명}-{몇동}동")
     set_common_head(ws, 단지명)
@@ -137,21 +137,28 @@ def create_xlsx(config):
     # 워크북 생성
     wb = Workbook()
 
-    아파트목록 = config["아파트목록"]
+    아파트목록 = config['아파트목록']
     # 설정파일명 = config["설정파일명"]
-    엑셀파일명 = config["엑셀파일명"]
+    엑셀파일명 = config['엑셀파일명']
 
     # 워크시트 생성
+    '''
+    {
+        '단지명': sheet_name,
+        '동호수목록': apartment_data,
+        '동호수목록2': new_data,
+        '대상세대수': max_idx
+    }
+    '''
     for 아파트객체 in 아파트목록:
         단지명 = 아파트객체['단지명']
+        대상세대수 = 아파트객체['대상세대수']
         동호수목록 = 아파트객체['동호수목록']
-        # print(단지명)
-        # print(동호수목록)
-        # SystemExit()
+        
         for k, v in 동호수목록.items():
             몇동 = int(k)
             호수목록 = v
-            create_new_seat(wb, 단지명, 몇동, 호수목록)
+            create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록)
 
     # 기본 생성된 워크시트 삭제
     wb.remove(wb.worksheets[0])
@@ -166,7 +173,8 @@ def create_xlsx(config):
 #             "단지명": "서울번동3",
 #             "동호수목록": {
 #                 "301": [ 101, 102, ]
-#               }
+#               },
+#            "대상세대수" : 1234
 #         }
 #     ],
 #     "설정파일명": "아파트목록.json",

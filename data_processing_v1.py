@@ -50,15 +50,30 @@ def insert_image_with_cell_height(ws, image_path, cell):
 
 def sorted_filelist(foldername):
     # 폴더 내의 파일 목록을 가져옴
-    files = os.listdir(foldername)
+    # files = os.listdir(foldername)
     
-    # 파일들을 이름순으로 정렬
-    sorted_files = sorted(files)
-
-    # 정렬된 파일들을 출력
-    if DEBUG_MODE:        
-        for file in sorted_files:
-            print(file)
+    # # 폴더 내부의 모든 파일 및 하위 폴더 순회
+    # for root, dirs, files in os.walk(foldername):
+    #     # 파일들을 이름순으로 정렬
+    #     sorted_files = sorted(files)
+        
+    #     # 정렬된 파일들을 출력
+    #     if DEBUG_MODE:        
+    #         for file in sorted_files:
+    #             print(file)
+        
+    #     # 파일 목록에 추가
+    #     filelist.extend(sorted_files)
+    
+    # 하위 1개의 폴더까지만 순회
+    for entry in os.scandir(foldername):
+        if entry.is_file():
+            # 파일인 경우 파일 목록에 추가
+            # filelist.append(entry.name)
+        elif entry.is_dir():
+            # 폴더인 경우 해당 폴더 내의 파일 목록을 가져와 파일 목록에 추가
+            subfolder_files = sorted(os.listdir(entry.path))
+            filelist.extend(subfolder_files)
 
     return sorted_files
 
@@ -180,13 +195,15 @@ if __name__ == '__main__':
     
     sorted_files = sorted_filelist(config["foldername"])
     
-    if not sorted_files:
-        print(f"{config['foldername']}폴더 아래에 파일이 존재하지 않습니다.")
-        sys.exit()
-        
-    wb = load_excel(config)
-
-    작업분_기존엑셀에_반영하기(wb, config["foldername"], config["동호수목록"], sorted_files)
+    print(sorted_files)
     
-    wb.save(config["확장자포함파일명"])
-    wb.close()
+    # if not sorted_files:
+    #     print(f"{config['foldername']}폴더 아래에 파일이 존재하지 않습니다.")
+    #     sys.exit()
+        
+    # wb = load_excel(config)
+
+    # 작업분_기존엑셀에_반영하기(wb, config["foldername"], config["동호수목록"], sorted_files)
+    
+    # wb.save(config["확장자포함파일명"])
+    # wb.close()
