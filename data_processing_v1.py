@@ -1,18 +1,18 @@
+# for openpyxl, 엑셀류를 다루는 표준을 따르는 라이브러리, Image를 다룰때 내부적으로 pillow를 사용해서 인스톨 필수
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import Font, Alignment
-from PIL import Image as PILImage
+#from PIL import Image as PILImage # 이미지 크기를 줄이고 싶을때, 이것을 활용해야할듯.
 
-import json
-
-import sys
-import os
-
-import re
+import json # json 파일에서 설정을 사용하고자함
+import sys # 파일 실행시 인자 받아서 활용하기
+import os # 해당경로 하위 파일 파악하는데 활용
+import re # 파일명에서 정보 추출하는데 활용
 
 from collections import defaultdict
 
-from openpyxl import load_workbook
+# 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
+from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_files, get_config_from_json
 
 DEBUG_MODE = False
 
@@ -35,9 +35,6 @@ LABEL_STRING = '단지명:'
 
 FIRST_ITEM_ROW_INDEX = 3
 
-def get_worksheet_name(몇동, 끝호수):
-    return f"{몇동}동(~{끝호수}호)"
-
 def insert_image_with_cell_height(ws, image_path, cell):
     img = Image(image_path)
 
@@ -47,20 +44,6 @@ def insert_image_with_cell_height(ws, image_path, cell):
 
     # 이미지 삽입
     ws.add_image(img, cell.coordinate)
-
-def sorted_filelist(foldername):
-    # 폴더 내의 파일 목록을 가져옴
-    files = os.listdir(foldername)
-    
-    # 파일들을 이름순으로 정렬
-    sorted_files = sorted(files)
-
-    # 정렬된 파일들을 출력
-    if DEBUG_MODE:        
-        for file in sorted_files:
-            print(file)
-
-    return sorted_files
 
 ENUM_현관사진 = 0
 ENUM_큐알사진 = 1
@@ -162,31 +145,47 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, sort
     print("성공", 성공)
     print("실패2", [x[0] for x in 실패2])
 
-def load_json(filepath='aparts.json'):
-    try:
-        with open(filepath, 'r') as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        raise Exception(f"파일 '{filepath}'을(를) 찾을 수 없습니다.")
-    except json.JSONDecodeError:
-        raise Exception(f"파일 '{filepath}'의 JSON 형식이 올바르지 않습니다.")
+def 아파트객체_추출(config, 단지명):
+    for 아파트객체 in config["아파트목록"]:
+        if 단지명 == 아파트객체["단지명"]:
+            return 아파트객체
+    return None
 
-    return config
+DEFAULT_CONFIG_FILE_PATH = "./apartments.json"
 
 if __name__ == '__main__':
     
-    config = load_json()
-    config["foldername"] = sys.argv[1]
+    config = get_config_from_json(DEFAULT_CONFIG_FILE_PATH)
     
-    sorted_files = sorted_filelist(config["foldername"])
+    folder_path = sys.argv[1]
+    단지명 = sys.argv[2]
     
+    # 유효한 아파트 단지인지 체크
+    아파트객체 = 아파트객체_추출(config, 단지명)
+    if 아파트객체 == None:
+        raise Exception(f"단지명 '{단지명}'은 유효하지 않습니다.")
+    
+    # 폴더 하위 모든 파일 추출
+    sorted_files = sorted_files(folder_path)
+    
+    # 하나도 파일이 없으면
     if not sorted_files:
-        print(f"{config['foldername']}폴더 아래에 파일이 존재하지 않습니다.")
-        sys.exit()
-        
-    wb = load_excel(config)
+        raise Exception(f"{folder_path}디렉토리 아래에 파일이 존재하지 않습니다.")
 
-    작업분_기존엑셀에_반영하기(wb, config["foldername"], config["동호수목록"], sorted_files)
+    # 하나의 단지에 대해서 수행하면 끝
     
-    wb.save(config["확장자포함파일명"])
+    # 1.기존 엑셀 파일 열고
+    # 기존의 load_excel 함수는 안 써도 될듯 => 파일명 규칙만 정해서, 단지명 => 파일 경로 => 해당 경로로 열기
+    파일경로 = get_xlsx_file_name(단지명)
+    wb = load_workbook(filename = 파일경로)
+    # wb = load_excel(config)
+    
+    # 2. 아파트객체에서 동호수목록을 가지고 유효성체크하며 기존 엑셀에 반영
+    # 단지당 엑셀파일 하나 => 동별 시트로 구분 => 모든 파일을 순회하며 유효한 것에 대해서 기존 엑셀에 반영
+    동호수목록 = 아파트객체["동호수목록"]
+    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, sorted_files)
+    
+    # 3. 작업 완료후 아래 코드로 저장하여 반영하기
+    wb.save(파일경로)
+    # wb.save(config["확장자포함파일명"])
     wb.close()
