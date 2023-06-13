@@ -1,6 +1,9 @@
 def get_worksheet_name(단지명, 몇동):
     return f"{단지명}-{몇동}동"
 
+def get_xlsx_file_name(단지명):
+    return f"{단지명}_요약"
+
 def sorted_files(depth, folder_path):
     import os
     

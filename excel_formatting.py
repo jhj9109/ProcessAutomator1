@@ -5,6 +5,9 @@ from PIL import Image as PILImage
 import json
 import sys
 
+# 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
+from common_utils import get_worksheet_name, get_xlsx_file_name, get_config_from_json
+
 thin_side_border = Border(
     left=Side(style='thin'),
     right=Side(style='thin'),
@@ -26,10 +29,10 @@ thick_border = Border(
 PX_TO_PT = 3 / 4
 PT_TO_PX = 4 / 3 # 1.33
 
+# Cell 한칸의 비율은 세로:가로 = 160:120 = 4:3
 IMAGE_CELL_HEIGHT_PT = 160
 IMAGE_CELL_HEIGHT_PX = IMAGE_CELL_HEIGHT_PT * PT_TO_PX
 
-# IMAGE_CELL_WIDTH_PT = 240
 IMAGE_CELL_WIDTH_PT = 120
 IMAGE_CELL_WIDTH_PT_6 = IMAGE_CELL_WIDTH_PT / 6
 
@@ -42,19 +45,6 @@ CELL_VALUE = 'B2'
 LABEL_STRING = '단지명:'
 
 FIRST_ITEM_ROW_INDEX = 3
-
-def get_ws_name(몇동, 끝호수):
-    return f"{몇동}동(~{끝호수}호)"
-
-def insert_image_with_cell_height(ws, image_path, cell):
-    img = Image(image_path)
-
-    # 이미지 사이즈 조절
-    img.width = IMAGE_CELL_HEIGHT_PX * img.width / img.height
-    img.height = IMAGE_CELL_HEIGHT_PX
-
-    # 이미지 삽입
-    ws.add_image(img, cell.coordinate)
 
 def set_common_head(ws, 단지명):
     # 1. 세대별 부착 사진대지
@@ -84,11 +74,13 @@ def set_items_format(ws, 몇동, 호수목록):
         row_index += 2
 
 def set_whole_worksheet_style(ws):
+    
     # 4개의 행 너비 조절
     ws.column_dimensions['A'].width = IMAGE_CELL_WIDTH_PT_6 / 2
     ws.column_dimensions['B'].width = IMAGE_CELL_WIDTH_PT_6 / 2
     ws.column_dimensions['C'].width = IMAGE_CELL_WIDTH_PT_6 / 2
     ws.column_dimensions['D'].width = IMAGE_CELL_WIDTH_PT_6 / 2
+    
     # 스타일 설정
     font = Font(name='Arial', bold=True, italic=False)
     alignment = Alignment(horizontal='center', vertical='center')
@@ -99,11 +91,12 @@ def set_whole_worksheet_style(ws):
             cell.font = font
             cell.alignment = alignment
             cell.border = thin_side_border
-    
 
-def create_new_seat(wb, 단지명, 몇동, 호수목록):
-    # 단지명, 몇동, 호수목록
-    ws = wb.create_sheet(f"{단지명}-{몇동}동")
+def create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록):
+    
+    worksheet_name = get_worksheet_name(단지명, 몇동)
+    ws = wb.create_sheet(worksheet_name)
+    
     set_common_head(ws, 단지명)
     set_items_format(ws, 몇동, 호수목록)
     set_whole_worksheet_style(ws)
@@ -133,58 +126,49 @@ def create_new_seat(wb, 단지명, 몇동, 호수목록):
         )
         row_index += 2
 
-def create_xlsx(config):
+def create_new_xlsx(아파트객체):
     # 워크북 생성
     wb = Workbook()
 
-    아파트목록 = config["아파트목록"]
-    # 설정파일명 = config["설정파일명"]
-    엑셀파일명 = config["엑셀파일명"]
-
-    # 워크시트 생성
-    for 아파트객체 in 아파트목록:
-        단지명 = 아파트객체['단지명']
-        동호수목록 = 아파트객체['동호수목록']
-        # print(단지명)
-        # print(동호수목록)
-        # SystemExit()
-        for k, v in 동호수목록.items():
-            몇동 = int(k)
-            호수목록 = v
-            create_new_seat(wb, 단지명, 몇동, 호수목록)
+    단지명 = 아파트객체['단지명']
+    동호수목록 = 아파트객체['동호수목록']
+    # 대상세대수 = 아파트객체['대상세대수']
+        
+    # 각 동별 워크시트 생성
+    for k, v in 동호수목록.items():
+        몇동 = int(k) # josn에서의 객체의 key로서 문자열인 숫자인 타입이므로 인트형으로 변환
+        호수목록 = v
+        create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록)
 
     # 기본 생성된 워크시트 삭제
     wb.remove(wb.worksheets[0])
 
     # 워크북 저장
-    wb.save(엑셀파일명)
+    save_filename = get_xlsx_file_name(단지명)
+    wb.save(save_filename)
     wb.close()
 
-# {
-#     "아파트목록": [
-#         {
-#             "단지명": "서울번동3",
-#             "동호수목록": {
-#                 "301": [ 101, 102, ]
-#               }
-#         }
-#     ],
-#     "설정파일명": "아파트목록.json",
-#     "엑셀파일명": "요약.xlsx"
-# }
+''' JSON 파일에서 config 읽기
+{
+    "아파트목록": [
+        {
+            "단지명": "서울번동3",
+            "동호수목록": {
+                "301": [ 101, 102, ..., 109 ]
+            },
+            "대상세대수" : 1234
+        }
+    ],
+    "설정파일명": "아파트목록.json",
+    "엑셀파일명": "요약.xlsx"
+}
+'''
 
-# JSON 파일 읽기
-def load_json(filepath='config.json'):
-    try:
-        with open(filepath, 'r') as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        raise Exception(f"파일 '{filepath}'을(를) 찾을 수 없습니다.")
-    except json.JSONDecodeError:
-        raise Exception(f"파일 '{filepath}'의 JSON 형식이 올바르지 않습니다.")
-
-    return config
-
+'''
+1. 아파트목록 정보가 담긴 json 파일 하나를 읽는다.
+2. 각 아파트별로 하나의 엑셀파일을 만든다.
+3. 하나의 엑셀 파일은 각 동별로 시트를 만든다.
+'''
 USE_DEFAULT_PATH = True
 
 if __name__ == '__main__':
@@ -197,6 +181,12 @@ if __name__ == '__main__':
     except IndexError:
         raise Exception(f"파일경로가 인자로 적절히 입력되지 않았습니다.")
     
-    config = load_json(설정파일경로)
+    config = get_config_from_json(설정파일경로)
     
-    create_xlsx(config)
+    아파트목록 = config['아파트목록']
+    # 설정파일명 = config["설정파일명"]
+    # 엑셀파일명 = config['엑셀파일명']
+
+    # 각 아파트단지별 워크시트 생성
+    for 아파트객체 in 아파트목록:
+        create_new_xlsx(아파트객체)
