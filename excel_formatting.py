@@ -148,6 +148,30 @@ def create_new_xlsx(아파트객체):
     wb.save(save_filename)
     wb.close()
 
+def create_new_summary_xlsx(아파트목록, 엑셀파일명):
+    # 워크북 생성
+    wb = Workbook()
+
+    # 기본 워크시트 선택
+    ws = wb.active
+
+    ws['A1'].value = '단지명'
+    ws['B1'].value = '대상세대수'
+    ws['C1'].value = '완료세대수'
+    ws['D1'].value = '진행률'
+    
+    START_INDEX = 2
+    
+    for idx, 아파트객체 in enumerate(아파트목록):
+        ws[f'A{START_INDEX + idx}'].value = 아파트객체['단지명']
+        ws[f'B{START_INDEX + idx}'].value = 아파트객체['대상세대수']
+        ws[f'C{START_INDEX + idx}'].value = 0
+        ws[f'D{START_INDEX + idx}'].value = 0
+    
+    # 워크북 저장
+    wb.save(엑셀파일명)
+    wb.close()
+
 ''' JSON 파일에서 config 읽기
 {
     "아파트목록": [
@@ -185,8 +209,12 @@ if __name__ == '__main__':
     
     아파트목록 = config['아파트목록']
     # 설정파일명 = config["설정파일명"]
-    # 엑셀파일명 = config['엑셀파일명']
+    엑셀파일명 = config['엑셀파일명']
 
     # 각 아파트단지별 워크시트 생성
     for 아파트객체 in 아파트목록:
         create_new_xlsx(아파트객체)
+    
+    # summary 워크시트 생성
+    create_new_summary_xlsx(아파트목록, 엑셀파일명)
+    
