@@ -57,7 +57,7 @@ def get_new_data(apartment_data):
 def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파일명):
 
     # 엑셀 파일 열기
-    workbook = load_workbook(추출할엑셀파일경로)
+    workbook = load_workbook(filename = 추출할엑셀파일경로)
 
     # 각 시트를 순회하여 아파트목록 데이터 생성
     아파트목록 = [get_apartment_info(sheetname) for sheetname in workbook.sheetnames]
@@ -72,6 +72,11 @@ def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파�
     with open(설정파일명, 'w', encoding='utf-8') as json_file:
         json.dump(config, json_file, ensure_ascii=False, indent=4)
 
+''' 
+1. excel 파일 하나에 단지별로 시트 하나에 명부가 적혀있다.
+2. 각 시트별로 순회하며 단지 정보를 추출하여 하나의 아파트 객체를 만든다.
+3. 만들어진 아파트 객체 리스트를 json 형식으로 파일로 저장한다.
+'''
 if __name__ == '__main__':
     
     추출할엑셀파일경로 = '00 - 입주자서명부.xlsx'
