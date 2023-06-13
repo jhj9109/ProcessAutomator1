@@ -12,10 +12,10 @@ def process_index_dong_ho(apartment_data, max_index, index, dong, ho):
             max_index = max(max_index, index)
     return max_index
 
-def get_apartment_info(sheetname):
+def get_apartment_info(wb, sheetname):
     
     # 시트 열기
-    ws = workbook[sheetname]
+    ws = wb[sheetname]
     
     # 시트별로 동호수를 저장할 리스트 생성
     apartment_data = defaultdict(list)
@@ -57,16 +57,16 @@ def get_new_data(apartment_data):
 def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파일명):
 
     # 엑셀 파일 열기
-    workbook = load_workbook(filename = 추출할엑셀파일경로)
+    wb = load_workbook(filename = 추출할엑셀파일경로)
 
     # 각 시트를 순회하여 아파트목록 데이터 생성
-    아파트목록 = [get_apartment_info(sheetname) for sheetname in workbook.sheetnames]
+    아파트목록 = [get_apartment_info(wb, sheetname) for sheetname in wb.sheetnames]
 
     # JSON 파일로 저장
     config = {
-        '아파트목록': 아파트목록
-        '설정파일명': 설정파일명
-        '엑셀파일명': 엑셀파일명
+        '아파트목록': 아파트목록,
+        '설정파일명': 설정파일명,
+        '엑셀파일명': 엑셀파일명,
     }
 
     with open(설정파일명, 'w', encoding='utf-8') as json_file:

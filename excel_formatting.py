@@ -92,7 +92,7 @@ def set_whole_worksheet_style(ws):
             cell.alignment = alignment
             cell.border = thin_side_border
 
-def create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록):
+def create_new_seat(wb, 단지명, 몇동, 호수목록):
     
     worksheet_name = get_worksheet_name(단지명, 몇동)
     ws = wb.create_sheet(worksheet_name)
@@ -138,7 +138,7 @@ def create_new_xlsx(아파트객체):
     for k, v in 동호수목록.items():
         몇동 = int(k) # josn에서의 객체의 key로서 문자열인 숫자인 타입이므로 인트형으로 변환
         호수목록 = v
-        create_new_seat(wb, 단지명, 대상세대수, 몇동, 호수목록)
+        create_new_seat(wb, 단지명, 몇동, 호수목록)
 
     # 기본 생성된 워크시트 삭제
     wb.remove(wb.worksheets[0])
