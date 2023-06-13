@@ -1,6 +1,7 @@
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import Font, Alignment, Side, Border
+
 from PIL import Image as PILImage
 import json
 import sys
@@ -163,10 +164,16 @@ def create_new_summary_xlsx(아파트목록, 엑셀파일명):
     START_INDEX = 2
     
     for idx, 아파트객체 in enumerate(아파트목록):
-        ws[f'A{START_INDEX + idx}'].value = 아파트객체['단지명']
-        ws[f'B{START_INDEX + idx}'].value = 아파트객체['대상세대수']
-        ws[f'C{START_INDEX + idx}'].value = 0
-        ws[f'D{START_INDEX + idx}'].value = 0
+        i = START_INDEX + idx 
+        ws[f'A{i}'].value = 아파트객체['단지명']
+        ws[f'B{i}'].value = 아파트객체['대상세대수']
+        ws[f'C{i}'].value = 0
+        ws[f'D{i}'].value = f"=C{i} / B{i}"
+    
+    i = START_INDEX + len(아파트목록)
+    ws[f'B{i}'].value = f"=SUM(B{START_INDEX}:B{i-1})"
+    ws[f'C{i}'].value = f"=SUM(C{START_INDEX}:C{i-1})"
+    ws[f'D{i}'].value = f"=C{i} / B{i}"
     
     # 워크북 저장
     wb.save(엑셀파일명)
