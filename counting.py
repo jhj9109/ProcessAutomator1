@@ -1,6 +1,6 @@
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.image import Image
-from common_utils import get_config_from_json, get_xlsx_file_name, get_worksheet_name
+from common_utils import get_config_from_json, get_xlsx_file_name, get_worksheet_name, get_apart_object
 
 import sys
 
@@ -73,19 +73,13 @@ def 진행률체크위한_사진체크하기(아파트객체, 엑셀파일명):
     
     return 완료세대수
 
-def 아파트객체_추출(config, 단지명):
-    for 아파트객체 in config["아파트목록"]:
-        if 단지명 == 아파트객체["단지명"]:
-            return 아파트객체
-    raise Exception(f"config에서 단지명({단지명})에 대한 아파트객체_추출에 실패했습니다.")
-
 def 아파트단지_하나_카운팅(config, 단지명, 프린트여부 = True, 파일업데이트여부 = False):
     
     아파트목록 = config['아파트목록']
     # 설정파일명 = config["설정파일명"]
     엑셀파일명 = config['엑셀파일명']
     
-    아파트객체 = 아파트객체_추출(config, 단지명)
+    아파트객체 = get_apart_object(config, 단지명)
 
     완료세대수 = 진행률체크위한_사진체크하기(아파트객체, 엑셀파일명)
     대상세대수 = 아파트객체["대상세대수"]

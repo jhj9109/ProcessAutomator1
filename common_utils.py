@@ -57,3 +57,15 @@ def get_config_from_json(filepath):
         raise Exception(f"파일 '{filepath}'의 JSON 형식이 올바르지 않습니다.")
 
     return config
+
+def get_apart_object(config, 단지명):
+    for 아파트객체 in config["아파트목록"]:
+        if 단지명 == 아파트객체["단지명"]:
+            return 아파트객체
+    raise Exception(f"config에서 단지명({단지명})에 대한 아파트객체_추출에 실패했습니다.")
+
+def get_apart_object2(config, 순번):
+    for 아파트객체 in config["아파트목록"]:
+        if 순번 == 아파트객체["순번"]:
+            return 아파트객체
+    raise Exception(f"config에서 순번({순번})에 대한 아파트객체_추출에 실패했습니다.")

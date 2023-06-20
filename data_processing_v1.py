@@ -12,7 +12,7 @@ import re # 파일명에서 정보 추출하는데 활용
 from collections import defaultdict
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
-from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, get_config_from_json
+from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, get_config_from_json, get_apart_object
 
 DEBUG_MODE = False
 
@@ -88,7 +88,7 @@ def 워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일�
     insert_image_with_cell_height(ws, 큐알사진_파일경로, 큐알사진_cell)
 
 
-def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file_entries):
+def 작업분_기존엑셀에_반영하기(wb, 단지명, 동호수목록, file_entries):
     # 동별로 하나의 시트 => 동별로 구분 짓기.
     동별_작업분 = { int(동): defaultdict(lambda: ['', '', -1]) for 동 in 동호수목록.keys() }
     ''' 예시
@@ -143,22 +143,13 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
     # for i, lst in enumerate([성공적으로업데이트, 사진_하나라도_없어_실패]):
     #     print(["성공적으로업데이트", "사진_하나라도_없어_실패"][i])
     #     print(lst)
-    
-
-def 아파트객체_추출(config, 단지명):
-    for 아파트객체 in config["아파트목록"]:
-        if 단지명 == 아파트객체["단지명"]:
-            return 아파트객체
-    return None
 
 DEFAULT_CONFIG_FILE_PATH = "./apartments.json"
 
-def 폴더와_단지명을입력받아_업데이트(config, folder_path, 단지명, base_path):
+def update_one_apartment(config, folder_path, 단지명, base_path):
     
     # 1. 유효한 아파트 단지인지 체크
-    아파트객체 = 아파트객체_추출(config, 단지명)
-    if 아파트객체 == None:
-        raise Exception(f"단지명 '{단지명}'은 유효하지 않습니다.")
+    아파트객체 = get_apart_object(config, 단지명)
     
     # 2. 폴더 하위 모든 파일 추출 => path까지 가진 DirEntry로 변경
     file_entries = sorted_file_entries(-1, folder_path)
@@ -168,18 +159,20 @@ def 폴더와_단지명을입력받아_업데이트(config, folder_path, 단지�
         raise Exception(f"{folder_path}디렉토리 아래에 파일이 존재하지 않습니다.")
 
     # 3. 아파트단지 하나에 대한 엑셀파일(워크북)을 연다.
-    파일경로 = f"{base_path}/{get_xlsx_file_name(단지명)}"
+    
+    파일경로 = os.path.join(base_path, get_xlsx_file_name(단지명))
     wb = load_workbook(filename = 파일경로)
     
     # 4. 아파트객체에서 동호수목록을 가지고 유효성체크하며 기존 엑셀에 반영
     동호수목록 = 아파트객체["동호수목록"]
-    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, file_entries)
+    작업분_기존엑셀에_반영하기(wb, 단지명, 동호수목록, file_entries)
     
     # 5. 작업 완료후 아래 코드로 저장하여 반영하기
-    # wb.save(파일경로)
-    wb.save(f"{base_path}/123.xlsx")
-    wb.close()
+    wb.save(파일경로)
+    # wb.save(os.path.join(base_path, "sample.xlsx"))
     
+    # 6. 파일 닫기
+    wb.close()
 
 '''
 1. 먼저 설정파일을 읽어서 아파트목록 데이터를 취한다.
@@ -197,4 +190,4 @@ if __name__ == '__main__':
     단지명 = sys.argv[2]
     base_path = "./" if len(sys.argv) < 4 else sys.argv[3]
     
-    폴더와_단지명을입력받아_업데이트(config, folder_path, 단지명, base_path)
+    update_one_apartment(config, folder_path, 단지명, base_path)
