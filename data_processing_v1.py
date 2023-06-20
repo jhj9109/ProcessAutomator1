@@ -12,7 +12,7 @@ import re # 파일명에서 정보 추출하는데 활용
 from collections import defaultdict
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
-from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_files, get_config_from_json
+from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, get_config_from_json
 
 DEBUG_MODE = False
 
@@ -77,37 +77,39 @@ def 동호수_유효성체크(동호수목록, 동, 호수):
     except ValueError:
         return -1
 
-def 워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일명, 큐알사진_파일명, 인덱스):
+def 워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일경로, 큐알사진_파일경로, 인덱스):
     
     
     row_index = FIRST_ITEM_ROW_INDEX + 인덱스 * 2
     
     현관사진_cell = ws.cell(row=row_index, column=1)
     큐알사진_cell = ws.cell(row=row_index, column=3)
-    insert_image_with_cell_height(ws, 현관사진_파일명, 현관사진_cell)
-    insert_image_with_cell_height(ws, 큐알사진_파일명, 큐알사진_cell)
+    insert_image_with_cell_height(ws, 현관사진_파일경로, 현관사진_cell)
+    insert_image_with_cell_height(ws, 큐알사진_파일경로, 큐알사진_cell)
 
 
-def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, filenames):
+def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file_entries):
     # 동별로 하나의 시트 => 동별로 구분 짓기.
-    동별_작업분 = defaultdict(defaultdict(lambda: ['', '', -1]))
+    동별_작업분 = { int(동): defaultdict(lambda: ['', '', -1]) for 동 in 동호수목록.keys() }
     ''' 예시
     동별_작업분[101][777] = [현관사진경로, 큐알사진경로, 워크시트명, 호수 - 시작호수]
     - 워크시트명과 호수-시작호수는 필요 없어진것일수도 있지만.... 일단 냅두자
     '''
     
-    성공적으로업데이트, 파일명이_매칭이_안되어_실패, 유효성체크_실패, 사진_하나라도_없어_실패 = [], [], []
+    성공적으로업데이트, 파일명이_매칭이_안되어_실패, 유효성체크_실패, 사진_하나라도_없어_실패 = [], [], [], []
     
-    for filename in filenames:
+    for entry in file_entries:
+        filename = entry.name
+        pattern1 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$' # 동호를 붙여넣기
+        pattern2 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$'
 
-        r = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*.(png|jpg|jpeg)$'
-        matched = re.fullmatch(r, filename)
+        matched = re.match(pattern1, filename) or re.match(pattern2, filename)
 
         if not matched:
             파일명이_매칭이_안되어_실패.append(filename)
             continue
     
-        동, 호수, 큐알사진여부 = matched.groups(False)
+        동, 호수, _현관사진여부, 큐알사진여부 = matched.groups(False)
         인덱스 = 동호수_유효성체크(동호수목록, 동, 호수)
 
         if 인덱스 == -1:
@@ -117,28 +119,31 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
         동, 호수 = map(int, [동, 호수])
         사진모드 = ENUM_큐알사진 if 큐알사진여부 else ENUM_현관사진
     
-        # 아마 이렇게 바뀔것
-        동별_작업분[동][호수][사진모드] = os.path.join(foldername, filename) # 이걸 어떻게...?
-        동별_작업분[동][호수][3] = 인덱스
+        동별_작업분[동][호수][사진모드] = entry.path
+        동별_작업분[동][호수][2] = 인덱스
         
+    # # 디버깅중
+    # for i, lst in enumerate([파일명이_매칭이_안되어_실패, 유효성체크_실패]):
+    #     print(["파일명이_매칭이_안되어_실패", "유효성체크_실패"][i])
+    #     print(lst)
     
     for 동, 호별작업물 in 동별_작업분.items():
         
         워크시트명 = get_worksheet_name(단지명, 동)
         ws = wb[워크시트명]
         
-        for 현관사진_파일명, 큐알사진_파일명, 인덱스 in 호별작업물.values():
+        for 현관사진_파일경로, 큐알사진_파일경로, 인덱스 in 호별작업물.values():
             
-            if 현관사진_파일명 != '' and 큐알사진_파일명 != '':
-                워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일명, 큐알사진_파일명, 인덱스)
-                성공적으로업데이트.append(value)
+            if 현관사진_파일경로 != '' and 큐알사진_파일경로 != '':
+                워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일경로, 큐알사진_파일경로, 인덱스)
+                성공적으로업데이트.append((현관사진_파일경로, 큐알사진_파일경로, 인덱스))
             else:
-                사진_하나라도_없어_실패.append(value)
+                사진_하나라도_없어_실패.append((현관사진_파일경로, 큐알사진_파일경로, 인덱스))
+    # # 디버깅중
+    # for i, lst in enumerate([성공적으로업데이트, 사진_하나라도_없어_실패]):
+    #     print(["성공적으로업데이트", "사진_하나라도_없어_실패"][i])
+    #     print(lst)
 
-    print("성공", 성공적으로업데이트)
-    print("실패1", 파일명이_매칭이_안되어_실패)
-    print("실패2", 유효성체크_실패)
-    print("실패3", 사진_하나라도_없어_실패)
 
 def 아파트객체_추출(config, 단지명):
     for 아파트객체 in config["아파트목록"]:
@@ -169,10 +174,10 @@ if __name__ == '__main__':
         raise Exception(f"단지명 '{단지명}'은 유효하지 않습니다.")
     
     # 3. 폴더 하위 모든 파일 추출
-    filenames = sorted_files(folder_path)
+    file_entries = sorted_file_entries(-1, folder_path)
     
     # 3-1. 하나도 파일이 없으면 에러
-    if not filenames:
+    if not file_entries:
         raise Exception(f"{folder_path}디렉토리 아래에 파일이 존재하지 않습니다.")
 
     # 4. 아파트단지 하나에 대한 엑셀파일(워크북)을 연다.
@@ -181,7 +186,7 @@ if __name__ == '__main__':
     
     # 5. 아파트객체에서 동호수목록을 가지고 유효성체크하며 기존 엑셀에 반영
     동호수목록 = 아파트객체["동호수목록"]
-    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, filenames)
+    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, file_entries)
     
     # 6. 작업 완료후 아래 코드로 저장하여 반영하기
     wb.save(파일경로)
