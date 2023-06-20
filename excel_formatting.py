@@ -1,6 +1,7 @@
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
-from openpyxl.styles import Font, Alignment, Side, Border
+from openpyxl.styles import Font, Alignment, Side, Border, numbers
+from openpyxl.utils import get_column_letter
 
 from PIL import Image as PILImage
 import json
@@ -148,6 +149,30 @@ def create_new_xlsx(아파트객체):
     save_filename = get_xlsx_file_name(단지명)
     wb.save(save_filename)
     wb.close()
+    
+'''
+FORMAT_PERCENTAGE: '0%',
+FORMAT_PERCENTAGE_00: '0.00%',
+'''
+def set_percent_style(cell):
+    cell.number_format = numbers.FORMAT_PERCENTAGE
+    
+def set_text_alignment_center(cell):
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+
+def get_longest_column_length(ws, min_row, max_row, col):
+    return max(len(str(cell.value)) for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=col, max_col=col) for cell in row)
+
+def set_column_width(ws, min_row, max_row, col):
+    column_letter = get_column_letter(col)
+    column_dimensions = ws.column_dimensions[column_letter]
+    logest_column_length = get_longest_column_length(ws, min_row, max_row, col) # 2: 여유공간
+    if col == 3:
+        # 단지명
+        column_dimensions.width = logest_column_length + 8
+    else:
+        column_dimensions.width = logest_column_length + 2
+    
 
 def create_new_summary_xlsx(아파트목록, 엑셀파일명):
     # 워크북 생성
@@ -156,25 +181,47 @@ def create_new_summary_xlsx(아파트목록, 엑셀파일명):
     # 기본 워크시트 선택
     ws = wb.active
 
-    ws['A1'].value = '단지명'
-    ws['B1'].value = '대상세대수'
-    ws['C1'].value = '완료세대수'
-    ws['D1'].value = '진행률'
+    # 추가
+    ws['A1'].value = '순번'
+    ws['B1'].value = '지역구'
+    # 기존, 2개씩 밀림
+    ws['C1'].value = '단지명'
+    ws['D1'].value = '대상세대수'
+    ws['E1'].value = '완료세대수'
+    ws['F1'].value = '진행률'
     
     START_INDEX = 2
     
     for idx, 아파트객체 in enumerate(아파트목록):
-        i = START_INDEX + idx 
-        ws[f'A{i}'].value = 아파트객체['단지명']
-        ws[f'B{i}'].value = 아파트객체['대상세대수']
-        ws[f'C{i}'].value = 0
-        ws[f'D{i}'].value = f"=C{i} / B{i}"
+        i = START_INDEX + idx
+        # 추가
+        ws[f'A{i}'].value = 아파트객체['순번']
+        ws[f'B{i}'].value = 아파트객체['지역구명']
+        # 기존, 2개씩 밀림
+        ws[f'C{i}'].value = 아파트객체['단지명']
+        ws[f'D{i}'].value = 아파트객체['대상세대수']
+        ws[f'E{i}'].value = 0
+        ws[f'F{i}'].value = f"=E{i} / D{i}"
+        set_percent_style(ws[f'F{i}'])
     
     i = START_INDEX + len(아파트목록)
-    ws[f'B{i}'].value = f"=SUM(B{START_INDEX}:B{i-1})"
-    ws[f'C{i}'].value = f"=SUM(C{START_INDEX}:C{i-1})"
-    ws[f'D{i}'].value = f"=C{i} / B{i}"
+    ws.merge_cells(f'A{i}:C{i}')
+    ws[f'A{i}'].value = "합계"
+    ws[f'D{i}'].value = f"=SUM(D{START_INDEX}:D{i-1})"
+    ws[f'E{i}'].value = f"=SUM(E{START_INDEX}:E{i-1})"
+    ws[f'F{i}'].value = f"=E{i} / D{i}"
+    set_percent_style(ws[f'F{i}'])
     
+    # 스타일 적용
+    for row in ws.iter_rows():
+        for cell in row:
+            set_text_alignment_center(cell)
+    for col_num in range(1, 6+1):
+        if col_num <= 3:
+            set_column_width(ws, 1, i-1, col_num)
+        else:
+            set_column_width(ws, 1, i, col_num)
+
     # 워크북 저장
     wb.save(엑셀파일명)
     wb.close()
@@ -219,8 +266,8 @@ if __name__ == '__main__':
     엑셀파일명 = config['엑셀파일명']
 
     # 각 아파트단지별 워크시트 생성
-    for 아파트객체 in 아파트목록:
-        create_new_xlsx(아파트객체)
+    # for 아파트객체 in 아파트목록:
+    #     create_new_xlsx(아파트객체)
     
     # summary 워크시트 생성
     create_new_summary_xlsx(아파트목록, 엑셀파일명)

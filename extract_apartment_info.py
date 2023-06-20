@@ -12,7 +12,32 @@ def process_index_dong_ho(apartment_data, max_index, index, dong, ho):
             max_index = max(max_index, index)
     return max_index
 
-def get_apartment_info(wb, sheetname):
+def get_area(단지명):
+    data = {
+        "서울번동3": '강북구',
+        "서울번동5": '강북구',
+        "서울번동2": '강북구',
+        "서울가양": '강서구',
+        "서울등촌9": '강서구',
+        "서울등촌7": '강서구',
+        "서울등촌1": '강서구',
+        "서울등촌4": '강서구',
+        "서울등촌6": '강서구',
+        "서울등촌11": '강서구',
+        "서울중계1": '노원구',
+        "서울중계3": '노원구',
+        "서울중계3(주거복지동)": '노원구',
+        "서울중계9": '노원구',
+        "서울중계9(주거복지동)": '노원구',
+        "서울월계": '노원구',
+        "서울오류": '노원구',
+        "서울공릉": '노원구',
+        "서울가좌": '마포구',
+        "서울중구": '중구',
+    }
+    return data[단지명]
+
+def get_apartment_info(wb, sheetname, index):
     
     # 시트 열기
     ws = wb[sheetname]
@@ -35,7 +60,9 @@ def get_apartment_info(wb, sheetname):
         '단지명': sheetname,
         '동호수목록': apartment_data,
         # '동호수목록2': new_data,
-        '대상세대수': max_index
+        '대상세대수': max_index,
+        '순번': index, # 1~20,
+        '지역구명': get_area(sheetname),
     }
 
     return apartment_info
@@ -60,7 +87,7 @@ def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파�
     wb = load_workbook(filename = 추출할엑셀파일경로)
 
     # 각 시트를 순회하여 아파트목록 데이터 생성
-    아파트목록 = [get_apartment_info(wb, sheetname) for sheetname in wb.sheetnames]
+    아파트목록 = [get_apartment_info(wb, sheetname, i+1) for i, sheetname in enumerate(wb.sheetnames)]
 
     # JSON 파일로 저장
     config = {
