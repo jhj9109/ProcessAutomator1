@@ -265,10 +265,10 @@ if __name__ == '__main__':
     # 설정파일명 = config["설정파일명"]
     엑셀파일명 = config['엑셀파일명']
 
-    # 각 아파트단지별 워크시트 생성
-    # for 아파트객체 in 아파트목록:
-    #     create_new_xlsx(아파트객체)
+    # 각 아파트단지별 파일 하나 생성
+    for 아파트객체 in 아파트목록:
+        create_new_xlsx(아파트객체)
     
-    # summary 워크시트 생성
+    # summary 파일 하나 생성
     create_new_summary_xlsx(아파트목록, 엑셀파일명)
     
