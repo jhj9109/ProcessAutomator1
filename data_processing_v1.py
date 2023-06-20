@@ -102,7 +102,7 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
         filename = entry.name
         pattern1 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$' # 동호를 붙여넣기
         pattern2 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$'
-
+        
         matched = re.match(pattern1, filename) or re.match(pattern2, filename)
 
         if not matched:
@@ -118,7 +118,7 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
     
         동, 호수 = map(int, [동, 호수])
         사진모드 = ENUM_큐알사진 if 큐알사진여부 else ENUM_현관사진
-    
+
         동별_작업분[동][호수][사진모드] = entry.path
         동별_작업분[동][호수][2] = 인덱스
         
@@ -126,7 +126,7 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
     # for i, lst in enumerate([파일명이_매칭이_안되어_실패, 유효성체크_실패]):
     #     print(["파일명이_매칭이_안되어_실패", "유효성체크_실패"][i])
     #     print(lst)
-    
+
     for 동, 호별작업물 in 동별_작업분.items():
         
         워크시트명 = get_worksheet_name(단지명, 동)
@@ -143,7 +143,7 @@ def 작업분_기존엑셀에_반영하기(wb, foldername, 동호수목록, file
     # for i, lst in enumerate([성공적으로업데이트, 사진_하나라도_없어_실패]):
     #     print(["성공적으로업데이트", "사진_하나라도_없어_실패"][i])
     #     print(lst)
-
+    
 
 def 아파트객체_추출(config, 단지명):
     for 아파트객체 in config["아파트목록"]:
@@ -152,6 +152,34 @@ def 아파트객체_추출(config, 단지명):
     return None
 
 DEFAULT_CONFIG_FILE_PATH = "./apartments.json"
+
+def 폴더와_단지명을입력받아_업데이트(config, folder_path, 단지명, base_path):
+    
+    # 1. 유효한 아파트 단지인지 체크
+    아파트객체 = 아파트객체_추출(config, 단지명)
+    if 아파트객체 == None:
+        raise Exception(f"단지명 '{단지명}'은 유효하지 않습니다.")
+    
+    # 2. 폴더 하위 모든 파일 추출 => path까지 가진 DirEntry로 변경
+    file_entries = sorted_file_entries(-1, folder_path)
+    
+    # 2-1. 하나도 파일이 없으면 에러
+    if not file_entries:
+        raise Exception(f"{folder_path}디렉토리 아래에 파일이 존재하지 않습니다.")
+
+    # 3. 아파트단지 하나에 대한 엑셀파일(워크북)을 연다.
+    파일경로 = f"{base_path}/{get_xlsx_file_name(단지명)}"
+    wb = load_workbook(filename = 파일경로)
+    
+    # 4. 아파트객체에서 동호수목록을 가지고 유효성체크하며 기존 엑셀에 반영
+    동호수목록 = 아파트객체["동호수목록"]
+    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, file_entries)
+    
+    # 5. 작업 완료후 아래 코드로 저장하여 반영하기
+    # wb.save(파일경로)
+    wb.save(f"{base_path}/123.xlsx")
+    wb.close()
+    
 
 '''
 1. 먼저 설정파일을 읽어서 아파트목록 데이터를 취한다.
@@ -164,30 +192,9 @@ if __name__ == '__main__':
     
     config = get_config_from_json(DEFAULT_CONFIG_FILE_PATH)
     
-    # 1. 커맨드라인 인수로부터 정보 입력 받음
+    # 0. 커맨드라인 인수로부터 정보 입력 받음
     folder_path = sys.argv[1]
     단지명 = sys.argv[2]
+    base_path = "./" if len(sys.argv) < 4 else sys.argv[3]
     
-    # 2. 유효한 아파트 단지인지 체크
-    아파트객체 = 아파트객체_추출(config, 단지명)
-    if 아파트객체 == None:
-        raise Exception(f"단지명 '{단지명}'은 유효하지 않습니다.")
-    
-    # 3. 폴더 하위 모든 파일 추출
-    file_entries = sorted_file_entries(-1, folder_path)
-    
-    # 3-1. 하나도 파일이 없으면 에러
-    if not file_entries:
-        raise Exception(f"{folder_path}디렉토리 아래에 파일이 존재하지 않습니다.")
-
-    # 4. 아파트단지 하나에 대한 엑셀파일(워크북)을 연다.
-    파일경로 = get_xlsx_file_name(단지명)
-    wb = load_workbook(filename = 파일경로)
-    
-    # 5. 아파트객체에서 동호수목록을 가지고 유효성체크하며 기존 엑셀에 반영
-    동호수목록 = 아파트객체["동호수목록"]
-    작업분_기존엑셀에_반영하기(wb, folder_path, 동호수목록, file_entries)
-    
-    # 6. 작업 완료후 아래 코드로 저장하여 반영하기
-    wb.save(파일경로)
-    wb.close()
+    폴더와_단지명을입력받아_업데이트(config, folder_path, 단지명, base_path)
