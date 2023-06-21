@@ -48,7 +48,8 @@ def 워크시트_하나_조사하기(ws, n):
     cnt = count_images(ws, image_obj, n)
 
 def 워크시트_유니크_사진수(ws):
-    count = len(set([ img.anchor for img in ws._images ]))
+    # count = len(set([ img.anchor for img in ws._images ]))
+    count = len([ img for img in ws._images ])
     return count
 
 def 워크시트_작업량(ws):
@@ -89,28 +90,54 @@ def 아파트단지_하나_카운팅(config, 단지명, 프린트여부 = True, 
         진행률 = (완료세대수 / 대상세대수) * 100
         print(f"{단지명}: {완료세대수}호 / 전체 {대상세대수} 호 = {진행률}%")
     
-    단지명_열 = 2
-    대상세대수_열 = 3
-    완료세대수_열 = 4
+    순번_열 = 1
+    지역구_열 = 2
+    단지명_열 = 3
+    대상세대수_열 = 4
+    완료세대수_열 = 5
+    
+    START_INDEX = 1
     
     # 2. 요약 파일 업데이트
     if 파일업데이트여부:
         wb = load_workbook(filename = 엑셀파일명)
         ws = wb.active
-        for row in ws.iter_rows():
-            if row[단지명_열] == 단지명:
-                row[완료세대수_열] = 완료세대수
-                break
-        else:
-            raise Exception(f"기존 요약파일에서 단지명({단지명})에 대한 row를 찾지 못했습니다.")
+        
+        cell = ws.cell(아파트객체["순번"] + 1, 완료세대수_열)
+        cell.value = 완료세대수
+        
         wb.save(엑셀파일명)
         wb.close()
+data = {
+    "서울번동3": '강북구',
+    "서울번동5": '강북구',
+    "서울번동2": '강북구',
+    "서울가양": '강서구',
+    "서울등촌9": '강서구',
+    "서울등촌7": '강서구',
+    "서울등촌1": '강서구',
+    "서울등촌4": '강서구',
+    "서울등촌6": '강서구',
+    "서울등촌11": '강서구',
+    "서울중계1": '노원구',
+    "서울중계3": '노원구',
+    "서울중계3(주거복지동)": '노원구',
+    "서울중계9": '노원구',
+    "서울중계9(주거복지동)": '노원구',
+    "서울월계": '노원구',
+    "서울오류": '노원구',
+    "서울공릉": '노원구',
+    "서울가좌": '마포구',
+    "서울중구": '중구',
+}
 
 if __name__ == '__main__':
 
     config = get_config_from_json('./apartments.json')
-    # 1. 커맨드라인 인수 체크
-    단지명 = sys.argv[1]
     프린트여부 = True
-    파일업데이트여부 = False
-    아파트단지_하나_카운팅(config, 단지명, 프린트여부, 파일업데이트여부)
+    파일업데이트여부 = True
+    for 단지명 in data.keys():
+        try:
+            아파트단지_하나_카운팅(config, 단지명, 프린트여부, 파일업데이트여부)
+        except:
+            print(f"{단지명} 카운팅 실패")
