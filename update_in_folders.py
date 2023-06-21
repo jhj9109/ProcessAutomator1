@@ -1,7 +1,7 @@
 import sys # for 실행인자
 import os # for 파일시스템 조회
 
-from common_utils import get_xlsx_file_name, sorted_file_entries, get_config_from_json, get_apart_object, get_apart_object2
+from common_utils import get_xlsx_file_name, sorted_file_entries, load_json, get_apart_object, get_apart_object2
 
 from data_processing_v1 import update_one_apartment
 
@@ -9,7 +9,7 @@ DEFAULT_CONFIG_FILE_PATH = "./apartments.json"
 
 if __name__ == '__main__':
     
-    config = get_config_from_json(DEFAULT_CONFIG_FILE_PATH)\
+    config = load_json(DEFAULT_CONFIG_FILE_PATH)\
     
     # 0. 커맨드라인 인수로부터 정보 입력 받음
     folder_path = sys.argv[1]

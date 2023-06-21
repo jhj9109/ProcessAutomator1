@@ -12,7 +12,7 @@ import re # 파일명에서 정보 추출하는데 활용
 from collections import defaultdict
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
-from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, get_config_from_json, get_apart_object
+from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, load_json, get_apart_object
 
 DEBUG_MODE = False
 
@@ -183,7 +183,7 @@ def update_one_apartment(config, folder_path, 단지명, base_path):
 '''
 if __name__ == '__main__':
     
-    config = get_config_from_json(DEFAULT_CONFIG_FILE_PATH)
+    config = load_json(DEFAULT_CONFIG_FILE_PATH)
     
     # 0. 커맨드라인 인수로부터 정보 입력 받음
     folder_path = sys.argv[1]

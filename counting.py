@@ -1,6 +1,6 @@
 from openpyxl import Workbook, load_workbook
 from openpyxl.drawing.image import Image
-from common_utils import get_config_from_json, get_xlsx_file_name, get_worksheet_name, get_apart_object
+from common_utils import load_json, get_xlsx_file_name, get_worksheet_name, get_apart_object
 
 import sys
 
@@ -133,7 +133,7 @@ data = {
 
 if __name__ == '__main__':
 
-    config = get_config_from_json('./apartments.json')
+    config = load_json('./apartments.json')
     프린트여부 = True
     파일업데이트여부 = True
     for 단지명 in data.keys():

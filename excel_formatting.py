@@ -8,7 +8,7 @@ import json
 import sys
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
-from common_utils import get_worksheet_name, get_xlsx_file_name, get_config_from_json
+from common_utils import get_worksheet_name, get_xlsx_file_name, load_json
 
 thin_side_border = Border(
     left=Side(style='thin'),
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     except IndexError:
         raise Exception(f"파일경로가 인자로 적절히 입력되지 않았습니다.")
     
-    config = get_config_from_json(설정파일경로)
+    config = load_json(설정파일경로)
     
     아파트목록 = config['아파트목록']
     # 설정파일명 = config["설정파일명"]

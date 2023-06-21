@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 import json
 from collections import defaultdict
 
+from common_utils import load_json
 def is_dong_ho(dong, ho):
     return isinstance(dong, int) and isinstance(ho, int)
 
@@ -37,9 +38,9 @@ def get_area(단지명):
     }
     return data[단지명]
 
-def get_apartment_info(wb, sheetname, index):
+def get_apartment_info(area_data, wb, sheetname, index):
     
-    # 시트 열기
+    # 시트 열기, sheetname == 단지명
     ws = wb[sheetname]
     
     # 시트별로 동호수를 저장할 리스트 생성
@@ -62,7 +63,7 @@ def get_apartment_info(wb, sheetname, index):
         # '동호수목록2': new_data,
         '대상세대수': max_index,
         '순번': index, # 1~20,
-        '지역구명': get_area(sheetname),
+        '지역구명': area_data[sheetname],
     }
 
     return apartment_info
@@ -81,13 +82,13 @@ def get_new_data(apartment_data):
         result[k] = lst
     return result
 
-def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파일명):
+def analyze_apartments(area_data, 추출할엑셀파일경로, 설정파일명, 엑셀파일명):
 
     # 엑셀 파일 열기
     wb = load_workbook(filename = 추출할엑셀파일경로)
 
     # 각 시트를 순회하여 아파트목록 데이터 생성
-    아파트목록 = [get_apartment_info(wb, sheetname, i+1) for i, sheetname in enumerate(wb.sheetnames)]
+    아파트목록 = [get_apartment_info(area_data, wb, sheetname, i+1) for i, sheetname in enumerate(wb.sheetnames)]
 
     # JSON 파일로 저장
     config = {
@@ -106,9 +107,11 @@ def analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파�
 '''
 if __name__ == '__main__':
     
+    DEFAULT_FILE_PATH = "./area.json"
     추출할엑셀파일경로 = '00 - 입주자서명부.xlsx'
     설정파일명 = 'apartments.json'
     엑셀파일명 = 'summary.xlsx'
+    area_data = load_json(DEFAULT_FILE_PATH)
 
     # 아파트 분석 실행
-    analyze_apartments(추출할엑셀파일경로, 설정파일명, 엑셀파일명)
+    analyze_apartments(area_data, 추출할엑셀파일경로, 설정파일명, 엑셀파일명)

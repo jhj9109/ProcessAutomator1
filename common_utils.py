@@ -46,17 +46,16 @@ def sorted_file_entries(depth, folder_path):
 
     return entries
 
-def get_config_from_json(filepath):
+def load_json(filepath):
     import json
     try:
         with open(filepath, 'r') as f:
-            config = json.load(f)
+            data = json.load(f)
     except FileNotFoundError:
         raise Exception(f"파일 '{filepath}'을(를) 찾을 수 없습니다.")
     except json.JSONDecodeError:
         raise Exception(f"파일 '{filepath}'의 JSON 형식이 올바르지 않습니다.")
-
-    return config
+    return data
 
 def get_apart_object(config, 단지명):
     for 아파트객체 in config["아파트목록"]:
