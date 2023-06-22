@@ -13,6 +13,7 @@ from collections import defaultdict
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
 from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, load_json, get_apart_object
+from rotate_image import save_rotated_image
 
 DEBUG_MODE = False
 
@@ -21,6 +22,7 @@ PT_TO_PX = 4 / 3 # 1.33
 
 IMAGE_CELL_HEIGHT_PT = 160
 IMAGE_CELL_HEIGHT_PX = IMAGE_CELL_HEIGHT_PT * PT_TO_PX
+IMAGE_CELL_WIDTH_PX = IMAGE_CELL_HEIGHT_PX * 3 / 4
 
 IMAGE_CELL_WIDTH_PT = 240
 IMAGE_CELL_WIDTH_PT_6 = IMAGE_CELL_WIDTH_PT / 6
@@ -35,18 +37,25 @@ LABEL_STRING = '단지명:'
 
 FIRST_ITEM_ROW_INDEX = 3
 
-def insert_image_with_cell_height(ws, image_path, cell):
+ENUM_현관사진 = 0
+ENUM_큐알사진 = 1
+
+def insert_image_with_cell_height(ws, image_path, cell, 현관사진여부 = False):
+
+    save_rotated_image(image_path)
+    
     img = Image(image_path)
 
     # 이미지 사이즈 조절 => 원본 크기를 조절하는것은 아니였던듯? 하려면 pillow의 Image 직접 사용해야하는듯
     img.width = IMAGE_CELL_HEIGHT_PX * img.width / img.height
     img.height = IMAGE_CELL_HEIGHT_PX
 
+    if 현관사진여부 and img.width > img.height :
+        img.height = img.height * IMAGE_CELL_WIDTH_PX / img.width
+        img.width = IMAGE_CELL_WIDTH_PX
+
     # 이미지 삽입
     ws.add_image(img, cell.coordinate)
-
-ENUM_현관사진 = 0
-ENUM_큐알사진 = 1
 
 def check_extension(filename, extname):
     pattern = rf"\.{extname}$"
@@ -84,7 +93,7 @@ def 워크시트하나에_이미지_한개_삽입하기(ws, 현관사진_파일�
     
     현관사진_cell = ws.cell(row=row_index, column=1)
     큐알사진_cell = ws.cell(row=row_index, column=3)
-    insert_image_with_cell_height(ws, 현관사진_파일경로, 현관사진_cell)
+    insert_image_with_cell_height(ws, 현관사진_파일경로, 현관사진_cell, True)
     insert_image_with_cell_height(ws, 큐알사진_파일경로, 큐알사진_cell)
 
 
@@ -102,7 +111,6 @@ def 작업분_기존엑셀에_반영하기(wb, 단지명, 동호수목록, file_
         filename = entry.name
         pattern1 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$' # 동호를 붙여넣기
         pattern2 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg)$'
-        
         matched = re.match(pattern1, filename) or re.match(pattern2, filename)
 
         if not matched:

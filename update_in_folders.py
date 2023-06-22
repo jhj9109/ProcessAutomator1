@@ -26,13 +26,17 @@ if __name__ == '__main__':
     
     # 각 폴더는 아파트 단지 하나 => 단지명
     for entry in folder_entries:
-        순번 = int(entry.name[:2])
-        # 단지명 = name[2:] # 앞에 두자리 제외 => 01서울번동3 => 서울번동3
-        '''
-        folder_path => 해당 폴더 아래의 모든 파일을 DirEntry로 추출할때 사용하기 위함.
-        단지명 => 아파트 객체 & 해당 아파트 엑셀 파일 경로
-        base_path => 해당 아파트 엑셀 파일 경로
-        '''
-        아파트객체 = get_apart_object2(config, 순번)
-        update_one_apartment(config, entry.path, 아파트객체["단지명"], base_path)
+        try:
+            순번 = int(entry.name[:2])
+            # 단지명 = name[2:] # 앞에 두자리 제외 => 01서울번동3 => 서울번동3
+            '''
+            folder_path => 해당 폴더 아래의 모든 파일을 DirEntry로 추출할때 사용하기 위함.
+            단지명 => 아파트 객체 & 해당 아파트 엑셀 파일 경로
+            base_path => 해당 아파트 엑셀 파일 경로
+            '''
+            아파트객체 = get_apart_object2(config, 순번)
+            print(f"{아파트객체['단지명']}단지 {아파트객체['대상세대수']}세대에 대한 작업 시작")
+            update_one_apartment(config, entry.path, 아파트객체["단지명"], base_path)
+        except:
+            print(f"{entry.name}폴더명을 가진 작업분에 대해 실패")
     

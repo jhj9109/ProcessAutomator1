@@ -2,7 +2,8 @@ def get_worksheet_name(단지명, 몇동):
     return f"{단지명}-{몇동}동"
 
 def get_xlsx_file_name(단지명):
-    return f"{단지명}_요약.xlsx"
+    return f"{단지명}.xlsx"
+    # return f"{단지명}_요약.xlsx"
 
 def sorted_files(depth, folder_path):
     import os
@@ -68,3 +69,11 @@ def get_apart_object2(config, 순번):
         if 순번 == 아파트객체["순번"]:
             return 아파트객체
     raise Exception(f"config에서 순번({순번})에 대한 아파트객체_추출에 실패했습니다.")
+
+def create_directory_if_not_exists(directory_path):
+    
+    import os
+    
+    if not os.path.exists(directory_path):
+    
+        os.makedirs(directory_path)
