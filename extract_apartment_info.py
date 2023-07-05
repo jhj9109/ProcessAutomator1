@@ -38,6 +38,21 @@ def get_area(단지명):
     }
     return data[단지명]
 
+def 출력파일정보객체_만들기(sheetname, apartment_data, num_of_apartment):
+    # 1325인 중계3까지는 하나의 파일로 할것이다.
+    SPLIT_THRESHOLD = 1330
+
+    출력파일정보객체 = dict()
+    동리스트 = list(map(int, apartment_data.keys()))
+
+    if num_of_apartment <= SPLIT_THRESHOLD:
+        출력파일정보객체[sheetname] = 동리스트
+    else:
+        출력파일정보객체[sheetname+'_1'] = 동리스트[:len(동리스트)//2]
+        출력파일정보객체[sheetname+'_2'] = 동리스트[len(동리스트)//2:]
+    return 출력파일정보객체
+
+
 def get_apartment_info(area_data, wb, sheetname, index):
     
     # 시트 열기, sheetname == 단지명
@@ -60,7 +75,7 @@ def get_apartment_info(area_data, wb, sheetname, index):
     apartment_info = {
         '단지명': sheetname,
         '동호수목록': apartment_data,
-        # '동호수목록2': new_data,
+        '출력파일정보객체': 출력파일정보객체_만들기(sheetname, apartment_data, max_index),
         '대상세대수': max_index,
         '순번': index, # 1~20,
         '지역구명': area_data[sheetname],
