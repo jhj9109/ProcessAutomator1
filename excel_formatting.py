@@ -149,6 +149,35 @@ def create_new_xlsx(아파트객체):
     save_filename = get_xlsx_file_name(단지명)
     wb.save(save_filename)
     wb.close()
+
+def create_new_xlsx2(단지명, 출력파일명, 동호수목록2):
+    # 워크북 생성
+    wb = Workbook()
+        
+    # 각 출력파일별 워크시트 생성
+    for k, v in 동호수목록2.items():
+        몇동 = int(k) # json에서의 객체의 key로서 문자열인 숫자인 타입이므로 인트형으로 변환
+        호수목록 = v
+        create_new_seat(wb, 단지명, 몇동, 호수목록)
+
+    # 기본 생성된 워크시트 삭제
+    wb.remove(wb.worksheets[0])
+
+    # 워크북 저장
+    save_filename = get_xlsx_file_name(출력파일명)
+    wb.save(save_filename)
+    wb.close()
+
+def create_xlsx_files(아파트객체):
+    단지명 = 아파트객체['단지명']
+    동호수목록 = 아파트객체['동호수목록']
+    출력파일정보객체 = 아파트객체['출력파일정보객체']
+    
+    # 각 파일 생성각 동별 워크시트 생성
+    for 출력파일명, 동목록 in 출력파일정보객체.items():
+        # "서울중계9_1", [901, 902, 903, 904, 905]
+        동호수목록2 = {동: 동호수목록[동] for 동 in map(str, 동목록)} # 기존과 통일성 위해 str로 활용
+        create_new_xlsx2(단지명, 출력파일명, 동호수목록2)
     
 '''
 FORMAT_PERCENTAGE: '0%',
@@ -265,9 +294,9 @@ if __name__ == '__main__':
     # 설정파일명 = config["설정파일명"]
     엑셀파일명 = config['엑셀파일명']
 
-    # 각 아파트단지별 파일 하나 생성
+    # 각 아파트단지별 파일 하나 생성 => 여러개 생성으로 수정
     for 아파트객체 in 아파트목록:
-        create_new_xlsx(아파트객체)
+        create_xlsx_files(아파트객체)
     
     # summary 파일 하나 생성
     create_new_summary_xlsx(아파트목록, 엑셀파일명)
