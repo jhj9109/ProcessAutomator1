@@ -3,6 +3,7 @@ import json
 from collections import defaultdict
 
 from common_utils import load_json
+
 def is_dong_ho(dong, ho):
     return isinstance(dong, int) and isinstance(ho, int)
 
@@ -12,31 +13,6 @@ def process_index_dong_ho(apartment_data, max_index, index, dong, ho):
         if isinstance(index, int):
             max_index = max(max_index, index)
     return max_index
-
-def get_area(단지명):
-    data = {
-        "서울번동3": '강북구',
-        "서울번동5": '강북구',
-        "서울번동2": '강북구',
-        "서울가양": '강서구',
-        "서울등촌9": '강서구',
-        "서울등촌7": '강서구',
-        "서울등촌1": '강서구',
-        "서울등촌4": '강서구',
-        "서울등촌6": '강서구',
-        "서울등촌11": '강서구',
-        "서울중계1": '노원구',
-        "서울중계3": '노원구',
-        "서울중계3(주거복지동)": '노원구',
-        "서울중계9": '노원구',
-        "서울중계9(주거복지동)": '노원구',
-        "서울월계": '노원구',
-        "서울오류": '노원구',
-        "서울공릉": '노원구',
-        "서울가좌": '마포구',
-        "서울중구": '중구',
-    }
-    return data[단지명]
 
 def 출력파일정보객체_만들기(sheetname, apartment_data, num_of_apartment):
     # 1325인 중계3까지는 하나의 파일로 할것이다.

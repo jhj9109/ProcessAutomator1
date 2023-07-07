@@ -9,30 +9,7 @@ from datetime import date
 
 from colorama import Fore, Back, Style
 
-FIRST_ITEM_ROW_INDEX = 3
-
-data = {
-    "서울번동3": '강북구',
-    "서울번동5": '강북구',
-    "서울번동2": '강북구',
-    "서울가양": '강서구',
-    "서울등촌9": '강서구',
-    "서울등촌7": '강서구',
-    "서울등촌1": '강서구',
-    "서울등촌4": '강서구',
-    "서울등촌6": '강서구',
-    "서울등촌11": '강서구',
-    "서울중계1": '노원구',
-    "서울중계3": '노원구',
-    "서울중계3(주거복지동)": '노원구',
-    "서울중계9": '노원구',
-    "서울중계9(주거복지동)": '노원구',
-    "서울월계": '노원구',
-    "서울오류": '노원구',
-    "서울공릉": '노원구',
-    "서울가좌": '마포구',
-    "서울중구": '중구',
-}
+from constants import 단지명_to_지역구, FIRST_ITEM_ROW_INDEX
 
 def insert_image_with_cell_height(ws, image_path, cell):
     img = Image(image_path)
@@ -64,8 +41,8 @@ def count_images(ws, image_obj, n):
 
 def get_image_object(ws):
     image_obj = {
-        images: ws._images,
-        anchors: { img.anchor: img for img in ws._images },
+        "images": ws._images,
+        "anchors": { img.anchor: img for img in ws._images },
     }
     return image_obj
 
@@ -201,7 +178,7 @@ if __name__ == '__main__':
     config = load_json('./apartments.json')
     프린트여부 = True
     파일업데이트여부 = True
-    for 단지명 in data.keys():
+    for 단지명 in 단지명_to_지역구.keys():
         try:
             아파트단지_하나_카운팅(config, 단지명, 프린트여부, 파일업데이트여부)
         except:

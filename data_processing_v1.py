@@ -20,17 +20,9 @@ import pdb
 
 from colorama import Fore, Back, Style
 
+from constants import IMAGE_CELL_HEIGHT_PX, IMAGE_CELL_WIDTH_PX, FIRST_ITEM_ROW_INDEX
+
 DEBUG_MODE = False
-
-PX_TO_PT = 3 / 4
-PT_TO_PX = 4 / 3  # 1.33
-
-IMAGE_CELL_HEIGHT_PT = 160
-IMAGE_CELL_HEIGHT_PX = IMAGE_CELL_HEIGHT_PT * PT_TO_PX
-IMAGE_CELL_WIDTH_PX = IMAGE_CELL_HEIGHT_PX * 3 / 4
-
-IMAGE_CELL_WIDTH_PT = 240
-IMAGE_CELL_WIDTH_PT_6 = IMAGE_CELL_WIDTH_PT / 6
 
 CELL_HEAD = 'A1'
 MERGED_CELL_HEAD_RANGE = 'A1:D1'
@@ -39,8 +31,6 @@ HEAD_STRING = '세대별 부착 사진대지'
 CELL_LABEL = 'A2'
 CELL_VALUE = 'B2'
 LABEL_STRING = '단지명:'
-
-FIRST_ITEM_ROW_INDEX = 3
 
 ENUM_현관사진 = 0
 ENUM_큐알사진 = 1
@@ -121,11 +111,11 @@ def 워크시트하나에_이미지_한개_삽입하기(ws, r, 현관사진_파�
 
     현관사진_cell = ws.cell(row=row_index, column=1)
     큐알사진_cell = ws.cell(row=row_index, column=3)
-    
+
     index = [-1, -1]
 
     # pdb.set_trace()
-    
+
     if row_index in r:
         # print("업데이트")
         index = [r[row_index][현관사진_COLUMN], r[row_index][큐알사진_COLUMN]]
@@ -136,12 +126,14 @@ def 워크시트하나에_이미지_한개_삽입하기(ws, r, 현관사진_파�
 
     return result
 
+
 def 동_호수_큐알사진여부_패턴매칭하기(filename):
     # pattern1 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
     # pattern2 = r'^(\d+)동\s*(\d+)호\s*(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
     # pattern3 = r'^(\d+)[^\d]+(\d+)[^\d]+(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
     # pattern4 = r'^(\d+)[^\d\(\)]+(\d+)[^\d\(\)]+(\(1\))?(\(2\))?\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
-    pattern5 = r'^(\d+)[^\d\(\)]+(\d+)[^\d\(\)]+\(([12])\)\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$' # (1), (2) 반드시
+    # (1), (2) 반드시
+    pattern5 = r'^(\d+)[^\d\(\)]+(\d+)[^\d\(\)]+\(([12])\)\s*\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
     pattern6 = r'^(\d+)-(\d+)(_1)?\.(?:png|jpg|jpeg|JPEG|PNG|JPG)$'
 
     # 111-444.jpg => 현관사진, 111-444_1.jpg => 큐알사진
@@ -151,7 +143,8 @@ def 동_호수_큐알사진여부_패턴매칭하기(filename):
         큐알사진여부 = bool(큐알사진여부)
         # print(f"{Fore.RED}{filename}{Style.RESET_ALL}")
         return (동, 호수, 큐알사진여부)
-    
+
+    # 111     444    (1)   .jpg, 111     444    (2)   .jpg
     matched = re.match(pattern5, filename)
     if matched:
         동, 호수, 큐알사진여부 = matched.groups(False)
@@ -175,13 +168,13 @@ def 동별_작업분_생성하기(동호수목록, file_entries):
 
     for entry in file_entries:
         filename = entry.name
-        
+
         result = 동_호수_큐알사진여부_패턴매칭하기(filename)
-        
+
         if result is None:
             파일명이_매칭이_안되어_실패.append(filename)
             continue
-        
+
         동, 호수, 큐알사진여부 = result
         인덱스 = 동호수_유효성체크(동호수목록, 동, 호수)
 
@@ -231,7 +224,8 @@ def 작업분_기존엑셀에_반영하기(base_path, 출력파일정보객체, 
 
                 if 현관사진_파일경로 != '' and 큐알사진_파일경로 != '':
 
-                    result = 워크시트하나에_이미지_한개_삽입하기(ws, r, 현관사진_파일경로, 큐알사진_파일경로, 인덱스)
+                    result = 워크시트하나에_이미지_한개_삽입하기(
+                        ws, r, 현관사진_파일경로, 큐알사진_파일경로, 인덱스)
                     if result == 신규_플래그:
                         작업량["신규"].append({
                             "현관사진_파일경로": 현관사진_파일경로,
@@ -243,7 +237,7 @@ def 작업분_기존엑셀에_반영하기(base_path, 출력파일정보객체, 
                             "현관사진_파일경로": 현관사진_파일경로,
                             "큐알사진_파일경로": 큐알사진_파일경로,
                             "인덱스": 인덱스
-                        })  
+                        })
                     성공적으로업데이트.append((현관사진_파일경로, 큐알사진_파일경로, 인덱스))
                 else:
                     사진_하나라도_없어_실패.append((현관사진_파일경로, 큐알사진_파일경로, 인덱스))
