@@ -13,7 +13,7 @@ from collections import defaultdict
 
 # 두개이상의 파일에서 공통으로 가져가야할 규칙은 import해서 사용하기
 from common_utils import get_worksheet_name, get_xlsx_file_name, sorted_file_entries, load_json, get_apart_object
-from rotate_image import save_rotated_image
+from image_preprocessing import handle_rotated_or_mpo_image
 
 DEBUG_MODE = False
 
