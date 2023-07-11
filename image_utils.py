@@ -30,9 +30,8 @@ def print_image_info(image_path):
 
 
 def is_valid_anchor(row, col):
-    return row >= FIRST_ITEM_ROW_INDEX and \
-        (row - FIRST_ITEM_ROW_INDEX) % 2 == 0 and \
-        (col != 현관사진_COLUMN and col != 큐알사진_COLUMN)
+    return (row >= FIRST_ITEM_ROW_INDEX and (row - FIRST_ITEM_ROW_INDEX) % 2 == 0) and \
+        (col == 현관사진_COLUMN or col == 큐알사진_COLUMN)
 
 
 def is_pair(images_in_row):
